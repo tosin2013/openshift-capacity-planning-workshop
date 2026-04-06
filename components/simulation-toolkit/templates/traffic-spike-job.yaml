@@ -1,0 +1,41 @@
+---
+# Traffic Spike Job - Manual trigger for Module 6 simulation
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: traffic-spike-placeholder
+  namespace: {{ .Values.namespace }}
+  labels:
+    demo.redhat.com/application: capacity-workshop
+    simulation: traffic-spike
+  annotations:
+    description: "Placeholder - students create actual job during Module 6"
+spec:
+  suspend: true  # Suspended by default, students unsuspend it
+  template:
+    metadata:
+      labels:
+        app: traffic-spike
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: wrk
+        image: williamyeh/wrk:latest
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            echo "=== BLACK FRIDAY TRAFFIC SPIKE SIMULATION ==="
+            echo "Started at: $(date)"
+            echo "Target: http://critical-app"
+            echo ""
+            # High-intensity load for 5 minutes
+            wrk -t8 -c200 -d300s --latency http://critical-app || echo "Target unavailable"
+            echo ""
+            echo "Traffic spike simulation completed at: $(date)"
+        resources:
+          requests:
+            cpu: 500m
+            memory: 256Mi
+          limits:
+            cpu: 1000m
+            memory: 512Mi

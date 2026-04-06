@@ -1,0 +1,49 @@
+---
+# ServiceAccount for simulation operations (Module 6)
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: simulation-admin
+  namespace: {{ .Values.namespace }}
+  labels:
+    demo.redhat.com/application: capacity-workshop
+---
+# Role for node operations (cordon, drain, uncordon)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: simulation-node-admin
+  labels:
+    demo.redhat.com/application: capacity-workshop
+rules:
+- apiGroups: [""]
+  resources: ["nodes"]
+  verbs: ["get", "list", "patch", "update"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "delete"]
+- apiGroups: [""]
+  resources: ["pods/eviction"]
+  verbs: ["create"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "deployments/scale"]
+  verbs: ["get", "list", "patch", "update"]
+- apiGroups: ["autoscaling"]
+  resources: ["horizontalpodautoscalers"]
+  verbs: ["get", "list", "watch"]
+---
+# RoleBinding for simulation ServiceAccount
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: simulation-admin-binding
+  labels:
+    demo.redhat.com/application: capacity-workshop
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: simulation-node-admin
+subjects:
+- kind: ServiceAccount
+  name: simulation-admin
+  namespace: {{ .Values.namespace }}

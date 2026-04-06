@@ -1,0 +1,4 @@
+apiVersion: v2
+name: simulation-toolkit
+description: Simulation toolkit for Module 6 - Black Friday chaos game
+version: 1.0.0

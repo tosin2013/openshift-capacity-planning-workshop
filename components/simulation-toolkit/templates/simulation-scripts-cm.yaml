@@ -1,0 +1,164 @@
+---
+# Simulation Scripts ConfigMap - Helper scripts for Module 6
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: simulation-scripts
+  namespace: {{ .Values.namespace }}
+  labels:
+    demo.redhat.com/application: capacity-workshop
+data:
+  simulate-node-failure.sh: |
+    #!/bin/bash
+    # Simulate node failure by cordoning and draining
+
+    set -e
+
+    if [ -z "$1" ]; then
+      echo "Usage: $0 <node-name>"
+      echo ""
+      echo "Available worker nodes:"
+      oc get nodes -l node-role.kubernetes.io/worker --no-headers | awk '{print $1}'
+      exit 1
+    fi
+
+    NODE=$1
+
+    echo "=== SIMULATING NODE FAILURE ==="
+    echo "Node: $NODE"
+    echo "Time: $(date)"
+    echo ""
+
+    echo "Step 1: Cordon node (mark as unschedulable)"
+    oc adm cordon $NODE
+    echo "✓ Node cordoned"
+    echo ""
+
+    echo "Step 2: List pods on this node before drain"
+    oc get pods -A --field-selector spec.nodeName=$NODE
+    echo ""
+
+    echo "Step 3: Drain node (evict pods)"
+    oc adm drain $NODE --ignore-daemonsets --delete-emptydir-data --force
+    echo "✓ Node drained"
+    echo ""
+
+    echo "Step 4: Verify pods rescheduled"
+    echo "Waiting 10 seconds for scheduler..."
+    sleep 10
+    oc get pods -n capacity-workshop -o wide
+    echo ""
+
+    echo "=== NODE FAILURE SIMULATION COMPLETE ==="
+    echo "To recover: oc adm uncordon $NODE"
+
+  simulate-traffic-spike.sh: |
+    #!/bin/bash
+    # Trigger traffic spike by scaling load generator
+
+    set -e
+
+    REPLICAS=${1:-5}
+
+    echo "=== SIMULATING TRAFFIC SPIKE ==="
+    echo "Scaling load-generator to $REPLICAS replicas"
+    echo "Time: $(date)"
+    echo ""
+
+    echo "Current state:"
+    oc get deployment load-generator -n capacity-workshop
+    echo ""
+
+    echo "Scaling deployment..."
+    oc scale deployment load-generator -n capacity-workshop --replicas=$REPLICAS
+    echo "✓ Load generator scaled to $REPLICAS replicas"
+    echo ""
+
+    echo "Waiting for pods to start..."
+    sleep 5
+    oc get pods -n capacity-workshop -l app=load-generator
+    echo ""
+
+    echo "Watch HPA response:"
+    oc get hpa -n capacity-workshop critical-app-hpa -w
+
+  recover-node.sh: |
+    #!/bin/bash
+    # Recover node from simulated failure
+
+    set -e
+
+    if [ -z "$1" ]; then
+      echo "Usage: $0 <node-name>"
+      echo ""
+      echo "Cordoned nodes:"
+      oc get nodes | grep SchedulingDisabled || echo "No cordoned nodes found"
+      exit 1
+    fi
+
+    NODE=$1
+
+    echo "=== RECOVERING NODE ==="
+    echo "Node: $NODE"
+    echo "Time: $(date)"
+    echo ""
+
+    echo "Uncordoning node (mark as schedulable)"
+    oc adm uncordon $NODE
+    echo "✓ Node recovered"
+    echo ""
+
+    echo "Node status:"
+    oc get node $NODE
+    echo ""
+
+    echo "=== NODE RECOVERY COMPLETE ==="
+
+  scenario-black-friday.sh: |
+    #!/bin/bash
+    # Black Friday scenario - Combined traffic spike + node failure
+
+    set -e
+
+    echo "╔════════════════════════════════════════════════════════╗"
+    echo "║   BLACK FRIDAY SIMULATION - MODULE 6                   ║"
+    echo "║   Scenario: 10x traffic + AZ failure                   ║"
+    echo "╚════════════════════════════════════════════════════════╝"
+    echo ""
+
+    read -p "Select a worker node to fail (enter node name): " NODE
+
+    echo ""
+    echo "=== SCENARIO TIMELINE ==="
+    echo "T+0:00 - Marketing launches campaign early (traffic spike)"
+    echo "T+0:30 - Availability zone experiences outage (node failure)"
+    echo "T+1:00 - Your team must ensure critical app stays running"
+    echo ""
+
+    read -p "Press ENTER to start simulation..."
+    echo ""
+
+    echo "=== T+0:00 - TRAFFIC SPIKE ==="
+    ./simulate-traffic-spike.sh 5
+    echo ""
+
+    echo "Monitoring for 30 seconds..."
+    sleep 30
+    echo ""
+
+    echo "=== T+0:30 - NODE FAILURE ==="
+    ./simulate-node-failure.sh $NODE
+    echo ""
+
+    echo "=== YOUR MISSION ==="
+    echo "1. Verify critical-app is still running"
+    echo "2. Check HPA has scaled up to handle load"
+    echo "3. Confirm batch jobs were preempted (low priority)"
+    echo "4. Calculate capacity headroom remaining"
+    echo ""
+    echo "Commands to verify:"
+    echo "  oc get pods -n capacity-workshop -o wide"
+    echo "  oc get hpa -n capacity-workshop"
+    echo "  oc adm top nodes"
+    echo ""
+    echo "When ready to recover: ./recover-node.sh $NODE"
