@@ -1,0 +1,9 @@
+apiVersion: v2
+name: capacity-planning-workshop
+description: Strategic Capacity Planning & Forecasting for OpenShift - Multi-component deployment via ArgoCD
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+maintainers:
+  - name: Tosin Akinosho
+    email: takinosho@redhat.com

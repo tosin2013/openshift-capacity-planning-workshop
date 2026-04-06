@@ -1,0 +1,14 @@
+# Development tools
+rhel-devops-skills-cli/
+
+# IDE
+.vscode/
+.idea/
+
+# Helm
+*.tgz
+charts/
+
+# OS
+.DS_Store
+Thumbs.db

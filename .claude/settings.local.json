@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git clone:*)",
+      "Bash(./install.sh install:*)",
+      "Bash(/plugin install:*)",
+      "Bash(oc login:*)",
+      "Bash(oc get:*)",
+      "Bash(oc adm:*)",
+      "Bash(oc describe:*)",
+      "Bash(oc whoami:*)",
+      "Bash(oc auth:*)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(cp -r temp-helm-template/examples/helm/* openshift-capacity-planning-workshop/)",
+      "Bash(rm -rf temp-helm-template)",
+      "Bash(git init:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git config:*)",
+      "Bash(git rm:*)"
+    ]
+  }
+}

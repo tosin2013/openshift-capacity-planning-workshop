@@ -1,0 +1,96 @@
+# Strategic Capacity Planning & Forecasting Workshop
+# Multi-component Helm deployment for OpenShift
+
+# ============================================================
+# Global Configuration
+# ============================================================
+global:
+  namespace: capacity-workshop
+  clusterDomain: ""  # Auto-injected by deployer
+  guid: ""           # Auto-injected by deployer
+
+# ============================================================
+# GitOps Configuration
+# ============================================================
+gitops:
+  # Repository containing the component charts
+  repoUrl: "https://github.com/tosin2013/openshift-capacity-planning-workshop.git"
+  revision: "main"
+  basePath: "."
+
+# ArgoCD settings
+argocd:
+  namespace: openshift-gitops
+  project: default
+
+# ============================================================
+# Components - Enable/disable and configure each component
+# ============================================================
+components:
+
+  # --- RHACM Deployment ---
+  rhacm:
+    enabled: true
+    namespace: open-cluster-management
+    observability:
+      enabled: true
+      storageClass: ocs-external-storagecluster-ceph-rbd
+      retentionDays: 30
+      retentionResolutionRaw: 7d
+      retentionLocal: 7d
+
+  # --- Monitoring Configuration ---
+  monitoringConfig:
+    enabled: true
+    # Includes PromQL queries ConfigMap and Grafana dashboards
+
+  # --- Sample Applications ---
+  sampleApps:
+    enabled: true
+    loadGenerator:
+      replicas: 1
+      targetRPS: 100
+
+  # --- Node Density Configuration ---
+  nodeDensityConfig:
+    # DISABLED BY DEFAULT - requires MachineConfig rollout
+    # Enable manually after initial deployment
+    enabled: false
+    maxPods: 110
+
+  # --- Simulation Toolkit ---
+  simulationToolkit:
+    enabled: true
+
+  # --- Showroom Lab Guide ---
+  showroom:
+    enabled: true
+    namespace: capacity-workshop
+    name: showroom
+    # Lab guide Git repository
+    content:
+      repoUrl: "https://github.com/tosin2013/capacity-planning-lab-guide.git"
+      repoRef: "main"
+      antoraPlaybook: "antora-playbook.yml"
+      image: "quay.io/rhpds/showroom-content:v1.3.1"
+    # Embedded terminal configuration
+    terminal:
+      enabled: true
+      image: "quay.io/rhpds/openshift-showroom-terminal-ocp:latest"
+      resources:
+        requests:
+          cpu: "500m"
+          memory: "512Mi"
+        limits:
+          cpu: "1000m"
+          memory: "1Gi"
+
+# ============================================================
+# Values injected by field content workload (do not modify)
+# ============================================================
+deployer:
+  domain: ""
+  apiUrl: ""
+
+fieldContent:
+  deploymentType: "helm"
