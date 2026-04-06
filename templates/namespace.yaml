@@ -1,0 +1,15 @@
+---
+# Workshop Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.global.namespace }}
+  labels:
+    demo.redhat.com/application: capacity-workshop
+    {{- if .Values.global.guid }}
+    demo.redhat.com/guid: {{ .Values.global.guid | quote }}
+    {{- end }}
+    openshift.io/cluster-monitoring: "true"
+  annotations:
+    openshift.io/description: "Strategic Capacity Planning & Forecasting Workshop"
+    openshift.io/display-name: "Capacity Planning Workshop"
