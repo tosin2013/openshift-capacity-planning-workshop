@@ -1,0 +1,5 @@
+namespace: capacity-workshop
+
+loadGenerator:
+  replicas: 1
+  targetRPS: 100

@@ -1,0 +1,40 @@
+---
+# Noisy Neighbor - CPU-intensive stress pod (Module 3)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: noisy-neighbor
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: noisy-neighbor
+    demo.redhat.com/application: capacity-workshop
+spec:
+  replicas: 0  # Start with 0, students deploy manually
+  selector:
+    matchLabels:
+      app: noisy-neighbor
+  template:
+    metadata:
+      labels:
+        app: noisy-neighbor
+    spec:
+      containers:
+      - name: stress
+        image: quay.io/prometheus/busybox:latest
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            echo "Starting CPU stress test..."
+            # Infinite loop to consume CPU
+            while true; do
+              for i in $(seq 1 1000000); do
+                echo $i > /dev/null
+              done
+            done
+        resources:
+          requests:
+            cpu: 2000m
+            memory: 1Gi
+          limits:
+            cpu: 2000m
+            memory: 1Gi

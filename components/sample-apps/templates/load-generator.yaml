@@ -1,0 +1,46 @@
+---
+# Load Generator - HTTP load testing with wrk (Module 3, 6)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: load-generator
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: load-generator
+    demo.redhat.com/application: capacity-workshop
+spec:
+  replicas: {{ .Values.loadGenerator.replicas }}
+  selector:
+    matchLabels:
+      app: load-generator
+  template:
+    metadata:
+      labels:
+        app: load-generator
+    spec:
+      containers:
+      - name: wrk
+        image: williamyeh/wrk:latest
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            echo "Load Generator - Capacity Planning Workshop"
+            echo "Target: http://target-app:8080"
+            echo "RPS Target: {{ .Values.loadGenerator.targetRPS }}"
+            echo ""
+            while true; do
+              echo "=== Load Test Started at $(date) ==="
+              wrk -t4 -c100 -d30s --latency http://target-app:8080 || echo "Target not ready"
+              echo "=== Test Complete, sleeping 60s ==="
+              sleep 60
+            done
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 256Mi
+        env:
+        - name: TARGET_RPS
+          value: "{{ .Values.loadGenerator.targetRPS }}"

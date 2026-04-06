@@ -1,0 +1,22 @@
+---
+# High Priority Class - For critical applications (Module 6)
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: high-priority
+  labels:
+    demo.redhat.com/application: capacity-workshop
+value: 1000
+globalDefault: false
+description: "High priority for critical applications - used in Module 6 simulation"
+---
+# Low Priority Class - For batch jobs (Module 6)
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: low-priority
+  labels:
+    demo.redhat.com/application: capacity-workshop
+value: 100
+globalDefault: false
+description: "Low priority for batch jobs - preemptible under node pressure"

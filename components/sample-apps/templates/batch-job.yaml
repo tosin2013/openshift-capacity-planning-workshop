@@ -1,0 +1,46 @@
+---
+# Batch Job - Low priority, preemptible (Module 6)
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: batch-job
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: batch-job
+    demo.redhat.com/application: capacity-workshop
+    priority: low
+spec:
+  schedule: "*/15 * * * *"  # Every 15 minutes
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: batch-job
+            priority: low
+        spec:
+          priorityClassName: low-priority
+          restartPolicy: Never
+          containers:
+          - name: worker
+            image: registry.access.redhat.com/ubi9/ubi-minimal:latest
+            command: ["/bin/sh", "-c"]
+            args:
+              - |
+                echo "Batch job started at $(date)"
+                echo "Processing background tasks..."
+                # Simulate work
+                for i in $(seq 1 30); do
+                  echo "Task $i/30"
+                  sleep 2
+                done
+                echo "Batch job completed at $(date)"
+            resources:
+              requests:
+                cpu: 100m
+                memory: 128Mi
+              limits:
+                cpu: 200m
+                memory: 256Mi

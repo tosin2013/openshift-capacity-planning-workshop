@@ -1,0 +1,111 @@
+---
+# BestEffort QoS - No requests/limits (Module 3)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: besteffort-app
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: besteffort-app
+    demo.redhat.com/application: capacity-workshop
+    qos-demo: besteffort
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: besteffort-app
+  template:
+    metadata:
+      labels:
+        app: besteffort-app
+        qos-demo: besteffort
+    spec:
+      containers:
+      - name: app
+        image: registry.access.redhat.com/ubi9/ubi-minimal:latest
+        command: ["sleep", "infinity"]
+        # NO resources block → QoS = BestEffort
+---
+# Burstable QoS - Requests < Limits (Module 3)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: burstable-app
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: burstable-app
+    demo.redhat.com/application: capacity-workshop
+    qos-demo: burstable
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: burstable-app
+  template:
+    metadata:
+      labels:
+        app: burstable-app
+        qos-demo: burstable
+    spec:
+      containers:
+      - name: app
+        image: registry.access.redhat.com/ubi9/ubi-minimal:latest
+        command: ["sleep", "infinity"]
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+---
+# Guaranteed QoS - Requests = Limits (Module 3)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: guaranteed-app
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: guaranteed-app
+    demo.redhat.com/application: capacity-workshop
+    qos-demo: guaranteed
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: guaranteed-app
+  template:
+    metadata:
+      labels:
+        app: guaranteed-app
+        qos-demo: guaranteed
+    spec:
+      containers:
+      - name: app
+        image: registry.access.redhat.com/ubi9/httpd-24:latest
+        ports:
+        - containerPort: 8080
+          name: http
+        resources:
+          requests:
+            cpu: 200m
+            memory: 256Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+---
+# Service for Guaranteed App (target for load generator)
+apiVersion: v1
+kind: Service
+metadata:
+  name: target-app
+  namespace: {{ .Values.namespace }}
+  labels:
+    demo.redhat.com/application: capacity-workshop
+spec:
+  selector:
+    app: guaranteed-app
+  ports:
+  - port: 8080
+    targetPort: 8080
+    name: http

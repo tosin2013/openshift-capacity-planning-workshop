@@ -1,0 +1,4 @@
+apiVersion: v2
+name: sample-apps
+description: Sample applications for capacity planning workshop labs
+version: 1.0.0
