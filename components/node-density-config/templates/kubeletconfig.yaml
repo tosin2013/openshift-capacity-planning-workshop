@@ -1,0 +1,33 @@
+---
+# KubeletConfig - Tune maxPods for node density (Module 4)
+# WARNING: This triggers a MachineConfig rollout and node reboots!
+# Disabled by default in values.yaml - enable manually
+apiVersion: machineconfiguration.openshift.io/v1
+kind: KubeletConfig
+metadata:
+  name: capacity-workshop-max-pods
+  labels:
+    demo.redhat.com/application: capacity-workshop
+spec:
+  machineConfigPoolSelector:
+    matchLabels:
+      pools.operator.machineconfiguration.openshift.io/{{ .Values.machineConfigPool }}: ""
+  kubeletConfig:
+    maxPods: {{ .Values.maxPods }}
+    # Additional tuning for high pod density
+    podsPerCore: 0  # Disable per-core pod limit
+    kubeAPIQPS: 50  # Increase API QPS for high pod churn
+    kubeAPIBurst: 100
+    serializeImagePulls: false  # Parallel image pulls
+    evictionHard:
+      memory.available: "500Mi"
+      nodefs.available: "10%"
+      imagefs.available: "15%"
+    evictionSoft:
+      memory.available: "1Gi"
+      nodefs.available: "15%"
+      imagefs.available: "20%"
+    evictionSoftGracePeriod:
+      memory.available: "1m30s"
+      nodefs.available: "2m"
+      imagefs.available: "2m"

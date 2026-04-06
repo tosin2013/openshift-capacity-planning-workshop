@@ -1,0 +1,4 @@
+apiVersion: v2
+name: node-density-config
+description: KubeletConfig for node density tuning (Module 4)
+version: 1.0.0
