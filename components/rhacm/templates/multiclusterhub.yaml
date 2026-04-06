@@ -1,0 +1,24 @@
+apiVersion: operator.open-cluster-management.io/v1
+kind: MultiClusterHub
+metadata:
+  name: multiclusterhub
+  namespace: {{ .Values.namespace }}
+  labels:
+    demo.redhat.com/application: capacity-workshop
+spec:
+  availabilityConfig: Basic
+  enableClusterBackup: false
+  ingress:
+    sslCiphers:
+      - ECDHE-RSA-AES128-GCM-SHA256
+      - ECDHE-RSA-AES256-GCM-SHA384
+  overrides:
+    components:
+      - name: multiclusterhub-repo
+        enabled: true
+      - name: search
+        enabled: true
+      - name: managedserviceaccount
+        enabled: true
+      - name: console
+        enabled: true

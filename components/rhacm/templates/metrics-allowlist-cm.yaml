@@ -1,0 +1,30 @@
+{{- if .Values.observability.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: observability-metrics-custom-allowlist
+  namespace: {{ .Values.namespace }}-observability
+  labels:
+    demo.redhat.com/application: capacity-workshop
+data:
+  metrics_list.yaml: |
+    names:
+      # Default capacity metrics
+      - kube_node_status_allocatable
+      - kube_node_status_capacity
+      - kube_pod_container_resource_requests
+      - kube_pod_container_resource_limits
+      - kube_pod_status_qos_class
+      - kube_pod_created
+      - container_memory_usage_bytes
+      - container_cpu_usage_seconds_total
+      # Custom capacity metrics
+      - namespace:container_cpu_usage:sum
+      - namespace:container_memory_usage:sum
+      - cluster:namespace:pod_cpu:active:kube_pod_container_resource_requests
+      - cluster:namespace:pod_memory:active:kube_pod_container_resource_requests
+    matches:
+      - __name__="kube_namespace_labels",namespace=~"capacity-workshop|openshift-.*"
+      - __name__="node_namespace_pod_container:container_cpu_usage_seconds_total:sum_irate"
+      - __name__="node_namespace_pod_container:container_memory_working_set_bytes"
+{{- end }}

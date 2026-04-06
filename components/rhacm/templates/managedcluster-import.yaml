@@ -1,0 +1,12 @@
+apiVersion: cluster.open-cluster-management.io/v1
+kind: ManagedCluster
+metadata:
+  name: local-cluster
+  labels:
+    demo.redhat.com/application: capacity-workshop
+    cloud: auto-detect
+    vendor: auto-detect
+    local-cluster: "true"
+spec:
+  hubAcceptsClient: true
+  leaseDurationSeconds: 60

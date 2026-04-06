@@ -1,0 +1,42 @@
+{{- if .Values.observability.enabled }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: thanos-object-storage
+  namespace: {{ .Values.namespace }}
+type: Opaque
+stringData:
+  thanos.yaml: |
+    type: s3
+    config:
+      bucket: ""
+      endpoint: ""
+      insecure: false
+---
+apiVersion: observability.open-cluster-management.io/v1beta2
+kind: MultiClusterObservability
+metadata:
+  name: observability
+  namespace: {{ .Values.namespace }}
+  labels:
+    demo.redhat.com/application: capacity-workshop
+spec:
+  observabilityAddonSpec:
+    enableMetrics: true
+    interval: 30s
+  storageConfig:
+    metricObjectStorage:
+      name: thanos-object-storage
+      key: thanos.yaml
+    storageClass: {{ .Values.observability.storageClass }}
+    alertmanagerStorageSize: 1Gi
+    compactStorageSize: 100Gi
+    ruleStorageSize: 1Gi
+    receiveStorageSize: 100Gi
+    storeStorageSize: 10Gi
+    retentionConfig:
+      retentionInLocal: {{ .Values.observability.retentionLocal }}
+      retentionResolutionRaw: {{ .Values.observability.retentionResolutionRaw }}
+      retentionResolution5m: 14d
+      retentionResolution1h: {{ .Values.observability.retentionDays }}d
+{{- end }}
