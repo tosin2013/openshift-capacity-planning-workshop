@@ -1,0 +1,4 @@
+apiVersion: v2
+name: monitoring-config
+description: PromQL queries, Grafana dashboards, and Prometheus rules for capacity planning
+version: 1.0.0

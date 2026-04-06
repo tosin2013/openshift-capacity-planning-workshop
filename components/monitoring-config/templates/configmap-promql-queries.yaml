@@ -1,0 +1,117 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: promql-queries
+  namespace: {{ .Values.namespace }}
+  labels:
+    demo.redhat.com/application: capacity-workshop
+data:
+  # Module 1: Planning Horizon & Baselines
+  cluster-cpu-capacity.promql: |
+    # Total CPU capacity across all nodes
+    sum(kube_node_status_capacity{resource="cpu"})
+
+  cluster-memory-capacity.promql: |
+    # Total memory capacity across all nodes (in bytes)
+    sum(kube_node_status_capacity{resource="memory"})
+
+  cluster-cpu-allocatable.promql: |
+    # Total CPU allocatable (capacity minus system reserved)
+    sum(kube_node_status_allocatable{resource="cpu"})
+
+  cluster-cpu-requests.promql: |
+    # Total CPU requested by all pods
+    sum(kube_pod_container_resource_requests{resource="cpu"})
+
+  cluster-cpu-usage.promql: |
+    # Actual CPU usage across all containers
+    sum(rate(container_cpu_usage_seconds_total{container!=""}[5m]))
+
+  cluster-allocation-gap.promql: |
+    # The waste: CPU requested but not used
+    sum(kube_pod_container_resource_requests{resource="cpu"}) - sum(rate(container_cpu_usage_seconds_total{container!=""}[5m]))
+
+  # Module 2: Mathematics of Forecasting
+  pod-velocity-30d.promql: |
+    # Pod creation rate over last 30 days (pods per day)
+    rate(kube_pod_created[30d]) * 86400
+
+  cpu-trend-linear.promql: |
+    # Linear regression of CPU requests over 30 days, projected 90 days ahead
+    predict_linear(sum(kube_pod_container_resource_requests{resource="cpu"})[30d:1h], 90*86400)
+
+  memory-trend-linear.promql: |
+    # Linear regression of memory requests over 30 days, projected 90 days ahead
+    predict_linear(sum(kube_pod_container_resource_requests{resource="memory"})[30d:1h], 90*86400)
+
+  node-cpu-utilization.promql: |
+    # Per-node CPU utilization percentage
+    (1 - avg by(node) (rate(node_cpu_seconds_total{mode="idle"}[5m]))) * 100
+
+  # Module 3: Developer Track (QoS Classes)
+  qos-class-distribution.promql: |
+    # Count of pods by QoS class
+    sum by (qos_class) (kube_pod_status_qos_class)
+
+  besteffort-pods.promql: |
+    # Pods with BestEffort QoS (no requests/limits)
+    count(kube_pod_status_qos_class{qos_class="BestEffort"})
+
+  guaranteed-pods.promql: |
+    # Pods with Guaranteed QoS (requests = limits)
+    count(kube_pod_status_qos_class{qos_class="Guaranteed"})
+
+  burstable-pods.promql: |
+    # Pods with Burstable QoS (requests < limits)
+    count(kube_pod_status_qos_class{qos_class="Burstable"})
+
+  pod-cpu-throttling.promql: |
+    # CPU throttling rate per pod
+    sum by (namespace, pod) (rate(container_cpu_cfs_throttled_seconds_total{container!=""}[5m]))
+
+  # Module 4: Infrastructure Track (Node Density)
+  pods-per-node.promql: |
+    # Current pod count per node
+    count by (node) (kube_pod_info)
+
+  max-pods-per-node.promql: |
+    # Maximum pods per node (from KubeletConfig)
+    kube_node_status_capacity{resource="pods"}
+
+  node-density-utilization.promql: |
+    # Pod density utilization percentage
+    (count by (node) (kube_pod_info) / kube_node_status_capacity{resource="pods"}) * 100
+
+  # Module 5: Fleet Observability (Multi-cluster)
+  namespace-cpu-cost.promql: |
+    # CPU cost per namespace (for showback/chargeback)
+    sum by (namespace) (kube_pod_container_resource_requests{resource="cpu"})
+
+  namespace-memory-cost.promql: |
+    # Memory cost per namespace (for showback/chargeback)
+    sum by (namespace) (kube_pod_container_resource_requests{resource="memory"})
+
+  top-5-expensive-namespaces-cpu.promql: |
+    # Top 5 namespaces by CPU requests
+    topk(5, sum by (namespace) (kube_pod_container_resource_requests{resource="cpu"}))
+
+  top-5-expensive-namespaces-memory.promql: |
+    # Top 5 namespaces by memory requests
+    topk(5, sum by (namespace) (kube_pod_container_resource_requests{resource="memory"}))
+
+  # Module 6: Integration Challenge (Simulation)
+  node-ready-status.promql: |
+    # Node ready status (1 = Ready, 0 = NotReady)
+    kube_node_status_condition{condition="Ready",status="true"}
+
+  pod-pending-count.promql: |
+    # Number of pods in Pending state
+    count(kube_pod_status_phase{phase="Pending"})
+
+  hpa-desired-replicas.promql: |
+    # HPA desired replica count
+    kube_horizontalpodautoscaler_status_desired_replicas
+
+  hpa-current-replicas.promql: |
+    # HPA current replica count
+    kube_horizontalpodautoscaler_status_current_replicas

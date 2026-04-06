@@ -1,0 +1,118 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: capacity-planning-alerts
+  namespace: {{ .Values.namespace }}
+  labels:
+    demo.redhat.com/application: capacity-workshop
+    prometheus: k8s
+    role: alert-rules
+spec:
+  groups:
+    - name: capacity-planning.rules
+      interval: 30s
+      rules:
+        # CPU Capacity Alerts
+        - alert: ClusterCPUCapacityWarning
+          expr: |
+            (sum(kube_pod_container_resource_requests{resource="cpu"}) / sum(kube_node_status_allocatable{resource="cpu"})) > 0.80
+          for: 5m
+          labels:
+            severity: warning
+            module: module-01
+          annotations:
+            summary: "Cluster CPU allocation exceeds 80%"
+            description: "CPU requests are at {{ $value | humanizePercentage }} of allocatable capacity. Consider adding nodes."
+
+        - alert: ClusterCPUCapacityCritical
+          expr: |
+            (sum(kube_pod_container_resource_requests{resource="cpu"}) / sum(kube_node_status_allocatable{resource="cpu"})) > 0.90
+          for: 5m
+          labels:
+            severity: critical
+            module: module-01
+          annotations:
+            summary: "Cluster CPU allocation exceeds 90%"
+            description: "CPU requests are at {{ $value | humanizePercentage }} of allocatable capacity. Immediate action required."
+
+        # Memory Capacity Alerts
+        - alert: ClusterMemoryCapacityWarning
+          expr: |
+            (sum(kube_pod_container_resource_requests{resource="memory"}) / sum(kube_node_status_allocatable{resource="memory"})) > 0.80
+          for: 5m
+          labels:
+            severity: warning
+            module: module-01
+          annotations:
+            summary: "Cluster memory allocation exceeds 80%"
+            description: "Memory requests are at {{ $value | humanizePercentage }} of allocatable capacity."
+
+        # Forecasting Alerts (Module 2)
+        - alert: CPUCapacityForecast30Days
+          expr: |
+            predict_linear(sum(kube_pod_container_resource_requests{resource="cpu"})[30d:1h], 30*86400) / sum(kube_node_status_allocatable{resource="cpu"}) > 0.90
+          for: 1h
+          labels:
+            severity: warning
+            module: module-02
+          annotations:
+            summary: "CPU capacity projected to exceed 90% in 30 days"
+            description: "Based on 30-day trend, CPU allocation will reach {{ $value | humanizePercentage }} in 30 days."
+
+        # QoS Alerts (Module 3)
+        - alert: HighBestEffortPodCount
+          expr: |
+            count(kube_pod_status_qos_class{qos_class="BestEffort"}) > 10
+          for: 10m
+          labels:
+            severity: info
+            module: module-03
+          annotations:
+            summary: "{{ $value }} pods running with BestEffort QoS"
+            description: "BestEffort pods have no resource guarantees and are first to be evicted under node pressure."
+
+        - alert: CPUThrottlingHigh
+          expr: |
+            sum by (namespace, pod) (rate(container_cpu_cfs_throttled_seconds_total{container!=""}[5m])) > 0.25
+          for: 10m
+          labels:
+            severity: warning
+            module: module-03
+          annotations:
+            summary: "Pod {{ $labels.namespace }}/{{ $labels.pod }} experiencing high CPU throttling"
+            description: "CPU throttling rate: {{ $value | humanizePercentage }}. Consider increasing CPU limits."
+
+        # Node Density Alerts (Module 4)
+        - alert: NodePodDensityHigh
+          expr: |
+            (count by (node) (kube_pod_info) / kube_node_status_capacity{resource="pods"}) > 0.90
+          for: 5m
+          labels:
+            severity: warning
+            module: module-04
+          annotations:
+            summary: "Node {{ $labels.node }} pod density exceeds 90%"
+            description: "{{ $value | humanizePercentage }} of max pods allocated. Approaching maxPods limit."
+
+        # Simulation Alerts (Module 6)
+        - alert: NodeNotReady
+          expr: |
+            kube_node_status_condition{condition="Ready",status="true"} == 0
+          for: 2m
+          labels:
+            severity: critical
+            module: module-06
+          annotations:
+            summary: "Node {{ $labels.node }} is NotReady"
+            description: "Node has been unavailable for 2 minutes. Pods may need rescheduling."
+
+        - alert: HighPodPendingCount
+          expr: |
+            count(kube_pod_status_phase{phase="Pending"}) > 5
+          for: 5m
+          labels:
+            severity: warning
+            module: module-06
+          annotations:
+            summary: "{{ $value }} pods in Pending state"
+            description: "Pods unable to schedule. Check node capacity and resource requests."
