@@ -21,12 +21,26 @@ spec:
         priority: high
     spec:
       priorityClassName: high-priority
+      initContainers:
+      - name: create-index
+        image: registry.access.redhat.com/ubi9/ubi-minimal:latest
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            echo '<html><head><title>Critical App - Capacity Workshop</title></head><body><h1>Critical Application</h1><p>High Priority - Module 6</p><p>Status: Running</p></body></html>' > /var/www/html/index.html
+            chmod 644 /var/www/html/index.html
+        volumeMounts:
+        - name: html-content
+          mountPath: /var/www/html
       containers:
       - name: app
         image: registry.access.redhat.com/ubi9/httpd-24:latest
         ports:
         - containerPort: 8080
           name: http
+        volumeMounts:
+        - name: html-content
+          mountPath: /var/www/html
         resources:
           requests:
             cpu: 250m
@@ -46,6 +60,9 @@ spec:
             port: 8080
           initialDelaySeconds: 5
           periodSeconds: 5
+      volumes:
+      - name: html-content
+        emptyDir: {}
 ---
 # Service for Critical App
 apiVersion: v1
