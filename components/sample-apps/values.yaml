@@ -1,4 +1,5 @@
 namespace: capacity-workshop
+batchNamespace: capacity-batch
 
 loadGenerator:
   replicas: 1

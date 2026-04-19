@@ -95,6 +95,7 @@ spec:
     helm:
       valuesObject:
         namespace: {{ .Values.global.namespace }}
+        batchNamespace: capacity-batch
         loadGenerator:
           replicas: {{ .Values.components.sampleApps.loadGenerator.replicas }}
           targetRPS: {{ .Values.components.sampleApps.loadGenerator.targetRPS }}

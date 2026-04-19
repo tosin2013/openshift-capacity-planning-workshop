@@ -1,10 +1,22 @@
 ---
+# Dedicated namespace for background batch workloads (isolated from Module 1 demo namespace)
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.batchNamespace }}
+  labels:
+    demo.redhat.com/application: capacity-workshop
+    openshift.io/cluster-monitoring: "true"
+  annotations:
+    openshift.io/description: "Background batch workloads for capacity planning workshop"
+    openshift.io/display-name: "Capacity Batch"
+---
 # Batch Job - Low priority, preemptible (Module 6)
 apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: batch-job
-  namespace: {{ .Values.namespace }}
+  namespace: {{ .Values.batchNamespace }}
   labels:
     app: batch-job
     demo.redhat.com/application: capacity-workshop
