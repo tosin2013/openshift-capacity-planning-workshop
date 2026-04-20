@@ -105,7 +105,7 @@ spec:
   syncPolicy:
     automated:
       prune: true
-      selfHeal: true
+      selfHeal: {{ .Values.components.sampleApps.selfHeal | default false }}
     syncOptions:
       - CreateNamespace=true
 {{- end }}
