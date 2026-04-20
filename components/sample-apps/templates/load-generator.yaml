@@ -24,22 +24,26 @@ spec:
         command: ["/bin/sh", "-c"]
         args:
           - |
+            TARGET_RPS="${TARGET_RPS:-100}"
+            THREADS=4
+            CONNS="${TARGET_RPS}"
+            [ "${TARGET_RPS}" -ge 500 ] && THREADS=8
             echo "Load Generator - Capacity Planning Workshop"
             echo "Target: http://target-app:8080"
-            echo "RPS Target: {{ .Values.loadGenerator.targetRPS }}"
+            echo "RPS Target: ${TARGET_RPS}  Threads: ${THREADS}  Connections: ${CONNS}"
             echo ""
             while true; do
               echo "=== Load Test Started at $(date) ==="
-              wrk -t4 -c100 -d30s --latency http://target-app:8080 || echo "Target not ready"
+              wrk -t${THREADS} -c${CONNS} -d30s --latency http://target-app:8080 || echo "Target not ready"
               echo "=== Test Complete, sleeping 60s ==="
               sleep 60
             done
         resources:
           requests:
-            cpu: 100m
+            cpu: 25m
             memory: 128Mi
           limits:
-            cpu: 500m
+            cpu: 200m
             memory: 256Mi
         env:
         - name: TARGET_RPS
