@@ -47,7 +47,6 @@ components:
   # --- Sample Applications ---
   sampleApps:
     enabled: true
-    selfHeal: false    # set to false during testing so oc set env/resources changes persist
     loadGenerator:
       replicas: 1
       targetRPS: 100

@@ -103,11 +103,9 @@ spec:
     server: https://kubernetes.default.svc
     namespace: {{ .Values.global.namespace }}
   syncPolicy:
-    {{- if .Values.components.sampleApps.selfHeal }}
-    automated:
-      prune: true
-      selfHeal: true
-    {{- end }}
+    # No automated sync for sample-apps — students run oc set env / oc autoscale
+    # as workshop exercises and changes must persist between ArgoCD poll cycles.
+    # Sync manually via: oc patch application ... --type json -p '[{"op":"replace","path":"/operation",...}]'
     syncOptions:
       - CreateNamespace=true
 {{- end }}
