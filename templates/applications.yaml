@@ -103,9 +103,11 @@ spec:
     server: https://kubernetes.default.svc
     namespace: {{ .Values.global.namespace }}
   syncPolicy:
+    {{- if .Values.components.sampleApps.selfHeal }}
     automated:
       prune: true
-      selfHeal: {{ .Values.components.sampleApps.selfHeal | default false }}
+      selfHeal: true
+    {{- end }}
     syncOptions:
       - CreateNamespace=true
 {{- end }}
