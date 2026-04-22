@@ -2,7 +2,7 @@ namespace: open-cluster-management
 
 observability:
   enabled: true
-  storageClass: ocs-external-storagecluster-ceph-rbd
+  storageClass: gp3-csi
   retentionDays: 30
   retentionResolutionRaw: 7d
   retentionLocal: 7d
