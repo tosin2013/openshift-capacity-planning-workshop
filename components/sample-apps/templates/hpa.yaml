@@ -1,5 +1,8 @@
 ---
-# HorizontalPodAutoscaler for Critical App (Module 3)
+# HorizontalPodAutoscaler for Critical App (Modules 3, 6)
+# Scales critical-app when CPU exceeds 75% or memory exceeds 80%.
+# During Module 6 Wave 1, the kube-burner load pods drive critical-app
+# CPU above the threshold, triggering this HPA to scale out.
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
@@ -40,6 +43,46 @@ spec:
       - type: Percent
         value: 100
         periodSeconds: 30
+      - type: Pods
+        value: 2
+        periodSeconds: 30
+      selectPolicy: Max
+---
+# HorizontalPodAutoscaler for Load Generator (Module 6)
+# Scales the load-generator when its own CPU exceeds 75%, simulating
+# the load-generation infrastructure auto-scaling under Black Friday traffic.
+# Observed as a secondary HPA during Module 6 Wave 1 monitoring.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: load-generator
+  namespace: {{ .Values.namespace }}
+  labels:
+    demo.redhat.com/application: capacity-workshop
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: load-generator
+  minReplicas: 1
+  maxReplicas: 5
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 75
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Pods
+        value: 1
+        periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
       - type: Pods
         value: 2
         periodSeconds: 30
