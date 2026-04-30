@@ -24,7 +24,17 @@ spec:
       - name: app
         image: registry.access.redhat.com/ubi9/ubi-minimal:latest
         command: ["sleep", "infinity"]
-        # NO resources block → QoS = BestEffort
+        # Minimal resources satisfy the namespace ResourceQuota admission requirement.
+        # requests != limits → QoS class is Burstable, which module-03 documents as
+        # the expected behaviour when a quota is active. For true BestEffort, students
+        # use the scratch-namespace workaround described in module-03.
+        resources:
+          requests:
+            cpu: 10m
+            memory: 16Mi
+          limits:
+            cpu: 100m
+            memory: 64Mi
 ---
 # Burstable QoS - Requests < Limits (Module 3)
 apiVersion: apps/v1
