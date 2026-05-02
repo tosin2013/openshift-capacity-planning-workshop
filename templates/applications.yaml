@@ -103,11 +103,21 @@ spec:
     server: https://kubernetes.default.svc
     namespace: {{ .Values.global.namespace }}
   syncPolicy:
-    # No automated sync for sample-apps — students run oc set env / oc autoscale
-    # as workshop exercises and changes must persist between ArgoCD poll cycles.
-    # Sync manually via: oc patch application ... --type json -p '[{"op":"replace","path":"/operation",...}]'
+    automated:
+      prune: false
+      # selfHeal is intentionally false: students run oc set env / oc autoscale
+      # as workshop exercises and those manual changes must persist. Without
+      # selfHeal, ArgoCD auto-deploys the initial resources but never reverts
+      # student modifications between poll cycles.
+      selfHeal: false
     syncOptions:
       - CreateNamespace=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 5m
 {{- end }}
 
 {{- if .Values.components.nodeDensityConfig.enabled }}
